@@ -10,9 +10,21 @@ class SaudacaoUtilTest {
 
     @Test
 //  @Disabled("Não está mais sendo utilizado!") Caso seja necessário desabilitar esse método
-    public void saudarTest(){
+    public void saudarTestBomdia(){
         String saudacao = SaudacaoUtil.saudar(9);
         assertEquals("Bom dia", saudacao, "Saudação incorreta"); //1: Valor esperado | 2: Valor atual | 3: Mensagem de erro
+    }
+
+    @Test
+    public void saudarTestBoaTarde(){
+        String saudacao = SaudacaoUtil.saudar(13);
+        assertEquals("Boa tarde", saudacao, "Saudação incorreta");
+    }
+
+    @Test
+    public void saudarTestBoaNoite(){
+        String saudacao = SaudacaoUtil.saudar(4);
+        assertEquals("Boa noite", saudacao, "Saudação incorreta");
     }
 
     @Test
