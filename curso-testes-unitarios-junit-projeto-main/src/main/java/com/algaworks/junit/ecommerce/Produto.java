@@ -38,6 +38,18 @@ public class Produto {
 		return valor;
 	}
 
+	public void setNome(String nome){
+		this.nome = nome;
+	}
+
+	public void setDescricao(String descricao){
+		this.descricao = descricao;
+	}
+
+	public void setValor(BigDecimal valor){
+		this.valor = valor;
+	}
+
 	private void validarValor(BigDecimal valor) {
 		if (valor.compareTo(BigDecimal.ONE) < 0) {
 			throw new IllegalArgumentException();
