@@ -6,11 +6,9 @@ import com.algaworks.junit.blog.modelo.Editor;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.function.Executable;
-import org.mockito.ArgumentCaptor;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.Mockito;
+import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.quality.MockitoHint;
 
 import java.math.BigDecimal;
 import java.util.Optional;
@@ -21,21 +19,22 @@ import static org.junit.jupiter.api.Assertions.*;
 @ExtendWith(MockitoExtension.class)
 class CadastroEditorTest {
 
+
+    @Mock //O Mockito vai instanciar a classe "dublê" a cada teste, como se fosse o BeforeEach
+    ArmazenamentoEditor armazenamentoEditor;
+
+    @Mock
+    GerenciadorEnvioEmail gerenciadorEnvioEmail;
+
+    @InjectMocks //Vamos injetar os 2 Mocks existentes como parâmetro
+    //O Mockito vai instanciar a classe "dublê" a cada teste, como se fosse o BeforeEach
+    CadastroEditor cadastroEditor;
+
     @Nested
     @DisplayName("Dado um cadastro de editor")
     class CadastrarEditor{
 
         Editor editor;
-
-        @Mock //O Mockito vai instanciar a classe "dublê" a cada teste, como se fosse o BeforeEach
-        ArmazenamentoEditor armazenamentoEditor;
-
-        @Mock
-        GerenciadorEnvioEmail gerenciadorEnvioEmail;
-
-        @InjectMocks //Vamos injetar os 2 Mocks existentes como parâmetro
-                    //O Mockito vai instanciar a classe "dublê" a cada teste, como se fosse o BeforeEach
-        CadastroEditor cadastroEditor;
 
         @BeforeEach
         void beforeEach(){
@@ -123,11 +122,60 @@ class CadastroEditorTest {
                 @DisplayName("Então enviar email após salvar (primeiro o método de salvar depois o de enviar email")
                 public void salvarPrimeiroEnviarEmailDepois(){
                     cadastroEditor.criar(editor);
-                    Mockito.inOrder(armazenamentoEditor, gerenciadorEnvioEmail);
-                    Mockito.verify(armazenamentoEditor, Mockito.times(1)).salvar(editor);
-                    Mockito.verify(gerenciadorEnvioEmail, Mockito.times(1)).enviarEmail(Mockito.any(Mensagem.class));
+                    InOrder inOrder =  Mockito.inOrder(armazenamentoEditor, gerenciadorEnvioEmail);
+                    inOrder.verify(armazenamentoEditor, Mockito.times(1)).salvar(editor);
+                    inOrder.verify(gerenciadorEnvioEmail, Mockito.times(1)).enviarEmail(Mockito.any(Mensagem.class));
                 }
 
+            }
+
+        }
+
+        @Nested
+        @DisplayName("Quando for cadastrar um editor nulo")
+        class CadastrarEditorNulo{
+
+            @Test
+            @DisplayName("Então deve lançar exception")
+            public void cadastrarEditorNuloLancarException(){
+                Executable metodoComException = () -> cadastroEditor.criar(null);
+                assertThrows(NullPointerException.class, metodoComException);
+                Mockito.verify(armazenamentoEditor, Mockito.never()).salvar(Mockito.any());
+                Mockito.verify(gerenciadorEnvioEmail, Mockito.never()).enviarEmail(Mockito.any());
+            }
+
+        }
+
+    }
+
+    @Nested
+    @DisplayName("Dado um editor válido")
+    class EditorValido{
+
+        @Spy
+        Editor editor = new Editor(1L, "Alex", "alex@gmail.com", BigDecimal.TEN, true);
+
+        @BeforeEach
+        void beforeEach(){
+            Mockito.when(armazenamentoEditor.salvar(editor)).thenAnswer(chamadaDoMetodo -> chamadaDoMetodo.getArgument(0, Editor.class));
+            Mockito.when(armazenamentoEditor.encontrarPorId(1L)).thenReturn(Optional.of(editor));
+        }
+
+        @Nested
+        @DisplayName("Quando for editar o objeto")
+        class EditarObjeto{
+
+            @Test
+            @DisplayName("Então deve alterar editor salvo")
+            public void alterarEditorSalvo(){
+                Editor editorAtualizado = new Editor(1L, "Alex Silva", "alex@gmail.com", BigDecimal.TEN, true);
+
+                cadastroEditor.editar(editorAtualizado);
+                Mockito.verify(editor, Mockito.times(1)).atualizarComDados(editorAtualizado);
+
+                InOrder inOrder = Mockito.inOrder(editor, armazenamentoEditor);
+                inOrder.verify(editor).atualizarComDados(editorAtualizado);
+                inOrder.verify(armazenamentoEditor).salvar(editor);
             }
 
         }
