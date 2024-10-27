@@ -2,17 +2,16 @@ package com.algaworks.junit.blog.negocio;
 
 import com.algaworks.junit.blog.armazenamento.ArmazenamentoPost;
 import com.algaworks.junit.blog.modelo.Editor;
+import com.algaworks.junit.blog.modelo.Ganhos;
+import com.algaworks.junit.blog.modelo.Notificacao;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.junit.jupiter.api.function.Executable;
 import com.algaworks.junit.blog.modelo.Post;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.Mockito;
-import org.mockito.Spy;
+import org.junit.jupiter.api.function.Executable;
+import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
@@ -23,9 +22,14 @@ import static org.junit.jupiter.api.Assertions.*;
 @ExtendWith(MockitoExtension.class)
 class CadastroPostTest {
 
-    Editor editor;
+    @Spy
+    Editor editor = new Editor(1L, "Alex", "alex@email.com", BigDecimal.TEN, true);
 
-    Post post;
+    @Spy
+    Post post = new Post("Olá mundo Java", "Olá Java com System.out.println", editor, true, true);
+
+    @Captor
+    ArgumentCaptor<Notificacao> notificacaoArgumentCaptor;
 
     @Mock
     ArmazenamentoPost armazenamentoPost;
@@ -45,8 +49,6 @@ class CadastroPostTest {
 
         @BeforeEach
         void beforeEach(){
-            editor = new Editor(1L, "Alex", "alex@email.com", BigDecimal.TEN, true);
-            post = new Post("Olá mundo Java", "Olá Java com System.out.println", editor, true, true);
 
             Mockito.when(armazenamentoPost.salvar(Mockito.any(Post.class)))
                     .thenAnswer(invocationOnMock -> {
@@ -59,6 +61,16 @@ class CadastroPostTest {
         @Nested
         @DisplayName("Quando criar")
         class QuandoCriar{
+
+            @Test
+            @DisplayName("Então deve verificar se está salvando o post")
+            public void verificarSeEstaSalvando(){
+
+                cadastroPost.criar(post);
+
+                Mockito.verify(armazenamentoPost, Mockito.times(1))
+                        .salvar(post);
+            }
 
             @Test
             @DisplayName("Então deve retornar o id criado")
@@ -75,10 +87,91 @@ class CadastroPostTest {
             @Test
             @DisplayName("Então deve criar o slug")
             public void deveCriarSlug(){
+                Post postCriado = cadastroPost.criar(post);
 
-                Post postCadastrado = cadastroPost.criar(post);
+                Mockito.verify(post, Mockito.times(1))
+                       .setSlug(Mockito.anyString());
 
-                assertEquals("ola-mundo-java-3fe3d8e2c0af6d52", postCadastrado.getSlug());
+                assertNotNull(postCriado.getSlug());
+            }
+
+            @Test
+            @DisplayName("Então deve retornar post com ganhos")
+            public void retornarPostComGanhos(){
+
+                Mockito.when(calculadoraGanhos.calcular(Mockito.any(Post.class)))
+                        .thenReturn(new Ganhos((BigDecimal.TEN), 4, BigDecimal.valueOf(40)));
+
+                Post postCriado = cadastroPost.criar(post);
+
+                Mockito.verify(post, Mockito.times(1))
+                       .setGanhos(Mockito.any(Ganhos.class));
+                assertNotNull(postCriado.getGanhos());
+            }
+
+        }
+
+        @Test
+        @DisplayName("Então verificar se está enviando notificação")
+        public void verificarSeEstaEnviandoNotificacao(){
+
+            cadastroPost.criar(post);
+
+            Mockito.verify(gerenciadorNotificacao, Mockito.times(1))
+                   .enviar(Mockito.any(Notificacao.class));
+        }
+
+        @Test
+        @DisplayName("E verificar o título da mensagem da notificação")
+        public void verificarTituloDaMensagemNotificacao(){
+
+            cadastroPost.criar(post);
+
+            Mockito.verify(gerenciadorNotificacao).enviar(notificacaoArgumentCaptor.capture());
+
+            Notificacao notificacaoCapturada = notificacaoArgumentCaptor.getValue();
+
+            notificacaoCapturada.getConteudo().contains(post.getTitulo());
+
+            assertEquals("Novo post criado -> " + post.getTitulo(), notificacaoCapturada.getConteudo());
+
+        }
+
+        @Test
+        @DisplayName("Então deve verificar as ordens dos métodos")
+        public void ordemDosMetodos(){
+
+            cadastroPost.criar(post);
+
+            InOrder inOrder = Mockito.inOrder(calculadoraGanhos, armazenamentoPost, gerenciadorNotificacao);
+
+            inOrder.verify(calculadoraGanhos, Mockito.times(1)).calcular(Mockito.any(Post.class));
+            inOrder.verify(armazenamentoPost, Mockito.times(1)).salvar(Mockito.any(Post.class));
+            inOrder.verify(gerenciadorNotificacao, Mockito.times(1)).enviar(Mockito.any(Notificacao.class));
+
+        }
+
+    }
+
+    @Nested
+    @DisplayName("Dado um post nulo")
+    class PostNulo{
+
+        @Nested
+        @DisplayName("Quando criar")
+        class CadastrarPostNulo{
+
+            @Test
+            @DisplayName("Então deve lançar exception, não salvar e não enviar notificação")
+            public void lanarExceptionAoCadastarNulo(){
+
+                Executable metodoComException = () -> cadastroPost.criar(null);
+
+                assertThrows(NullPointerException.class, metodoComException);
+
+                Mockito.verify(armazenamentoPost, Mockito.never()).salvar(Mockito.any(Post.class));
+                Mockito.verify(gerenciadorNotificacao, Mockito.never()).enviar(Mockito.any(Notificacao.class));
+
             }
 
         }
