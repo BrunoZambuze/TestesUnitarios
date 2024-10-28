@@ -8,9 +8,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.function.Executable;
 import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.mockito.quality.MockitoHint;
 
-import java.math.BigDecimal;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -38,7 +36,7 @@ class CadastroEditorTest {
 
         @BeforeEach
         void beforeEach(){
-            editor = new Editor(null, "Alex", "alex@gmail.com", BigDecimal.TEN, true);
+            editor = EditorTestData.editorNovo().build();
 
             //.lenient():
             Mockito.lenient().when(armazenamentoEditor.salvar(Mockito.any(Editor.class))) //Em vez de passar a variável "editor" com o valor fixo, podemos passar qualquer objeto
@@ -110,7 +108,7 @@ class CadastroEditorTest {
                         .thenReturn(Optional.empty())
                         .thenReturn(Optional.of(editor));
                 cadastroEditor.criar(editor);
-                Editor editorComEmailExistente = new Editor(null, "Alex", "alex@gmail.com", BigDecimal.TEN, true);
+                Editor editorComEmailExistente = EditorTestData.editorNovo().build();
                 assertThrows(RegraNegocioException.class, () -> cadastroEditor.criar(editorComEmailExistente));
             }
 
@@ -153,7 +151,7 @@ class CadastroEditorTest {
     class EditorValido{
 
         @Spy
-        Editor editor = new Editor(1L, "Alex", "alex@gmail.com", BigDecimal.TEN, true);
+        Editor editor = EditorTestData.editorExistente().build();
 
         @BeforeEach
         void beforeEach(){
@@ -168,7 +166,9 @@ class CadastroEditorTest {
             @Test
             @DisplayName("Então deve alterar editor salvo")
             public void alterarEditorSalvo(){
-                Editor editorAtualizado = new Editor(1L, "Alex Silva", "alex@gmail.com", BigDecimal.TEN, true);
+                Editor editorAtualizado = EditorTestData.editorExistente()
+                                                        .withNome("Alex Silva")
+                                                        .build();
 
                 cadastroEditor.editar(editorAtualizado);
                 Mockito.verify(editor, Mockito.times(1)).atualizarComDados(editorAtualizado);

@@ -23,10 +23,10 @@ import static org.junit.jupiter.api.Assertions.*;
 class CadastroPostTest {
 
     @Spy
-    Editor editor = new Editor(1L, "Alex", "alex@email.com", BigDecimal.TEN, true);
+    Editor editor = EditorTestData.editorExistente().build();
 
     @Spy
-    Post post = new Post("Olá mundo Java", "Olá Java com System.out.println", editor, true, true);
+    Post post = PostTestData.postNovo(editor).build();
 
     @Captor
     ArgumentCaptor<Notificacao> notificacaoArgumentCaptor;

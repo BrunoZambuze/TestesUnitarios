@@ -123,4 +123,61 @@ public class Post {
     public int hashCode() {
         return Objects.hash(id);
     }
+
+    public static Builder builder(){
+        return new Builder();
+    }
+
+    public final static class Builder{
+        private Long id;
+        private String titulo;
+        private String conteudo;
+        private Editor autor;
+        private boolean pago;
+        private boolean publicado;
+
+        private Builder(){}
+
+        public Builder withId(Long id){
+            this.id = id;
+            return this;
+        }
+
+        public Builder withTitulo(String titulo){
+            this.titulo = titulo;
+            return this;
+        }
+
+        public Builder withConteudo(String conteudo){
+            this.conteudo = conteudo;
+            return this;
+        }
+
+        public Builder withAutor(Editor autor){
+            this.autor = autor;
+            return this;
+        }
+
+        public Builder withPago(boolean pago){
+            this.pago = pago;
+            return this;
+        }
+
+        public Builder withPublicado(boolean publicado){
+            this.publicado = publicado;
+            return this;
+        }
+
+        public Post build(){
+            return new Post(
+                    this.titulo,
+                    this.conteudo,
+                    this.autor,
+                    this.pago,
+                    this.publicado
+            );
+        }
+
+    }
+
 }
