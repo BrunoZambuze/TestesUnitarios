@@ -1,9 +1,10 @@
 package com.algaworks.junit.utilidade;
 
-import org.junit.jupiter.api.Disabled;
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 
+import static org.assertj.core.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.*; //Utilizamos o "Assertions" para realizar uma auto-comparação
 
 class SaudacaoUtilTest {
@@ -12,7 +13,11 @@ class SaudacaoUtilTest {
 //  @Disabled("Não está mais sendo utilizado!") Caso seja necessário desabilitar esse método
     public void saudarTestBomdia(){
         String saudacao = SaudacaoUtil.saudar(9);
-        assertEquals("Bom dia", saudacao, "Saudação incorreta"); //1: Valor esperado | 2: Valor atual | 3: Mensagem de erro
+//        assertEquals("Bom dia", saudacao, "Saudação incorreta"); //1: Valor esperado | 2: Valor atual | 3: Mensagem de erro
+
+        assertThat(saudacao)
+                  .withFailMessage("Saudação incorreta")
+                  .isEqualTo("Bom dia");
     }
 
     @Test
@@ -29,9 +34,13 @@ class SaudacaoUtilTest {
 
     @Test
     public void deveLancarException(){
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
-                                                        () -> SaudacaoUtil.saudar(-10));
-        assertEquals("Hora inválida", exception.getMessage());
+//        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+//                                                        () -> SaudacaoUtil.saudar(-10));
+//        assertEquals("Hora inválida", exception.getMessage());
+
+        assertThatThrownBy(() -> SaudacaoUtil.saudar(-10))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Hora inválida");
     }
 
     @Test
